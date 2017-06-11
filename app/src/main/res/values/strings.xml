@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Androino</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_reload">Reload</string>
+
+    <string name="view_url_key">viewURL</string>
+
+
+</resources>
