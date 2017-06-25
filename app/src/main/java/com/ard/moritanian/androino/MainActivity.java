@@ -30,15 +30,24 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import java.io.BufferedOutputStream;
+import java.io.IOException;
 import java.net.Socket;
 import java.util.List;
 
 import android.content.Context;
 import android.widget.Toast;
 
+import org.shokai.firmata.ArduinoFirmata;
+import org.shokai.firmata.ArduinoFirmataEventHandler;
+import java.io.*;
+import java.lang.*;
+import android.hardware.usb.*;
+
 public class MainActivity extends AppCompatActivity {
 
     private WebView myWebView;
+    private JavaScriptInterface jsInterface;
+    final String NATIVE_INTERFACE_NAME = "nativeInterface";
 
     SurfaceView sv;
     SurfaceHolder sh;
@@ -47,7 +56,9 @@ public class MainActivity extends AppCompatActivity {
     Context con;
 
     private static final int PORT = 4680;
-    private static final String IP_ADDR = "192.168.179.7"; // IPアドレス
+    private static final String IP_ADDR = "localhost"; //"192.168.179.7"; // IPアドレス
+
+    ArduinoFirmata arduino;
 
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -91,7 +102,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        myWebView.addJavascriptInterface(new JavaScriptInterface(this), "nativeInterface");
+        jsInterface = new JavaScriptInterface(this);
+        myWebView.addJavascriptInterface(jsInterface, NATIVE_INTERFACE_NAME);
         // カスタムWebViewを設定する
         myWebView.setWebViewClient(new MyWebView());
 
@@ -144,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
                 return true;
             case R.id.action_reload:
+                myWebView.clearCache(true);
                 myWebView.reload();
                 return true;
 
@@ -166,6 +179,27 @@ public class MainActivity extends AppCompatActivity {
             myWebView.loadUrl("javascript:logFunc('called from native')");
         }
     }
+
+    public void connectArduino(){
+        arduino = new ArduinoFirmata(this);
+        try{
+            arduino.connect();
+        }
+        catch(IOException e){
+            e.printStackTrace();
+            finish();
+        }
+        catch(InterruptedException e){
+            e.printStackTrace();
+            finish();
+        }
+
+    }
+
+    public void disconnectArduino(){
+        arduino.close();
+    }
+
 
     public void setupCamera(){
        // getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
