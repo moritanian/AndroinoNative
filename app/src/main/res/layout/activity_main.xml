@@ -42,5 +42,23 @@
         tools:layout_editor_absoluteX="8dp" />
 
     </android.support.constraint.ConstraintLayout>
+    <FrameLayout
+        android:id="@+id/progressBarBackground"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:background="@color/colorProgressBarBackground">
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            android:indeterminateTintMode="src_atop"
+            android:indeterminateTint="@color/colorProgressBarBackground"
+            android:alpha="1.0"/>
+    </FrameLayout>
 
 </android.support.design.widget.CoordinatorLayout>

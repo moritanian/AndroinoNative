@@ -40,7 +40,7 @@ public class SettingsActivity extends AppCompatActivity {
         getSupportActionBar().setHomeButtonEnabled(true);
 
         viewUrlEditText = (EditText)findViewById(R.id.viewUrlEditText);
-        String viewUrl = pref.getString(getString(R.string.view_url_key), "http://192.168.179.7:8000");
+        String viewUrl = pref.getString(getString(R.string.view_url_key), MainActivity.URL);
         viewUrlEditText.setText(viewUrl, TextView.BufferType.EDITABLE);
         viewUrlEditText.addTextChangedListener(new TextWatcher() {
             @Override

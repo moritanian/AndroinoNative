@@ -21,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.PermissionRequest;
@@ -35,6 +36,8 @@ import java.net.Socket;
 import java.util.List;
 
 import android.content.Context;
+import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import org.shokai.firmata.ArduinoFirmata;
@@ -54,9 +57,12 @@ public class MainActivity extends AppCompatActivity {
     Camera cam;
     SurfaceHolderCallback shc;
     Context con;
+    ProgressBar progressBar;
+    FrameLayout progressBarBackground;
 
     private static final int PORT = 4680;
-    private static final String IP_ADDR = "localhost"; //"192.168.179.7"; // IPアドレス
+    private static final String IP_ADDR = "localhost:8080/Androino/server/"; //"192.168.179.7"; // IPアドレス
+    public static final String URL = "http://localhost:8080/Androino/server/";
 
     ArduinoFirmata arduino;
 
@@ -106,17 +112,17 @@ public class MainActivity extends AppCompatActivity {
         myWebView.addJavascriptInterface(jsInterface, NATIVE_INTERFACE_NAME);
         // カスタムWebViewを設定する
         myWebView.setWebViewClient(new MyWebView());
-
-
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        progressBarBackground = (FrameLayout) findViewById(R.id.progressBarBackground);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        String url = "http://192.168.179.7:8000";
+        String url;
         SharedPreferences pref = getSharedPreferences("settings_pref",MODE_WORLD_READABLE|MODE_WORLD_WRITEABLE);
-        url = pref.getString(getString(R.string.view_url_key), url);
+        url = pref.getString(getString(R.string.view_url_key), URL);
         Log.d("moritanian2" , url);
         myWebView.loadUrl(url);
 
@@ -156,8 +162,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
                 return true;
             case R.id.action_reload:
-                myWebView.clearCache(true);
-                myWebView.reload();
+                reloadWebView();
                 return true;
 
             case R.id.home:
@@ -169,12 +174,18 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void reloadWebView(){
+        progressBarBackground.setVisibility(View.VISIBLE);
+        myWebView.clearCache(true);
+        myWebView.reload();
+    }
+
     private class MyWebView extends WebViewClient {
 
         //ページの読み込み完了
         @Override
         public void onPageFinished(WebView view, String url) {
-
+            progressBarBackground.setVisibility(View.INVISIBLE);
             // HTML内に埋め込まれている「callJavaScript()」関数を呼び出す
             myWebView.loadUrl("javascript:logFunc('called from native')");
         }
