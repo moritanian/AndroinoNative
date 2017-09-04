@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int PORT = 4680;
     private static final String IP_ADDR = "localhost:8080/Androino/server/"; //"192.168.179.7"; // IPアドレス
-    public static final String URL = "http://localhost:8080/Androino/server/";
+    public static final String URL = "https://moritanian.github.io//Androino/server/"; //"http://localhost:8080/Androino/server/";
 
     ArduinoFirmata arduino;
 
@@ -108,23 +108,29 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        jsInterface = new JavaScriptInterface(this);
+        jsInterface = new JavaScriptInterface(this, myWebView);
         myWebView.addJavascriptInterface(jsInterface, NATIVE_INTERFACE_NAME);
         // カスタムWebViewを設定する
         myWebView.setWebViewClient(new MyWebView());
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBarBackground = (FrameLayout) findViewById(R.id.progressBarBackground);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
 
         String url;
         SharedPreferences pref = getSharedPreferences("settings_pref",MODE_WORLD_READABLE|MODE_WORLD_WRITEABLE);
         url = pref.getString(getString(R.string.view_url_key), URL);
         Log.d("moritanian2" , url);
+        progressBarBackground.setVisibility(View.VISIBLE);
         myWebView.loadUrl(url);
+
+
+        Log.d("moritanian2" , "connect Arduino " +  connectArduino());
+        Log.d("moritanian2", arduino.getBoardVersion());
+        arduino.digitalWrite(13, true);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
 
        // setupCamera();
     }
@@ -187,23 +193,29 @@ public class MainActivity extends AppCompatActivity {
         public void onPageFinished(WebView view, String url) {
             progressBarBackground.setVisibility(View.INVISIBLE);
             // HTML内に埋め込まれている「callJavaScript()」関数を呼び出す
-            myWebView.loadUrl("javascript:logFunc('called from native')");
+            myWebView.loadUrl("javascript:Arduino.log('called from native androino')");
         }
     }
 
-    public void connectArduino(){
+    public boolean connectArduino(){
         arduino = new ArduinoFirmata(this);
         try{
             arduino.connect();
         }
         catch(IOException e){
             e.printStackTrace();
-            finish();
+            //finish();
+            return false;
         }
         catch(InterruptedException e){
             e.printStackTrace();
-            finish();
+            //finish();
+            return false;
         }
+
+        jsInterface.callJsFunction(String.format("log('arduino version: %s')",  arduino.getBoardVersion()));
+
+        return true;
 
     }
 
