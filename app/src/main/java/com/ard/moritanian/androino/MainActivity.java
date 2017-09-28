@@ -171,6 +171,10 @@ public class MainActivity extends AppCompatActivity {
                 reloadWebView();
                 return true;
 
+            case R.id.action_connect_arduino:
+                connectArduino();
+                return true;
+
             case R.id.home:
                 if(myWebView.canGoBack()){
                     myWebView.goBack();
