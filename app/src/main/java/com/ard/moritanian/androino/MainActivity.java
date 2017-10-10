@@ -40,7 +40,8 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import org.shokai.firmata.ArduinoFirmata;
+
+import org.shokai.firmata.ArduinoFirmataDataHandler;
 import org.shokai.firmata.ArduinoFirmataEventHandler;
 import java.io.*;
 import java.lang.*;
@@ -65,12 +66,19 @@ public class MainActivity extends AppCompatActivity {
     public static final String URL = "https://moritanian.github.io//Androino/server/"; //"http://localhost:8080/Androino/server/";
 
     ArduinoFirmata arduino;
+    String viewUrl;
 
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if(SettingsActivity.getIsFullScreen(this)){
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            requestWindowFeature(Window.FEATURE_NO_TITLE);
+        }
+
         setContentView(R.layout.activity_main);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -85,7 +93,6 @@ public class MainActivity extends AppCompatActivity {
 
         //レイアウトで指定したWebViewのIDを指定する。
         myWebView = (WebView)findViewById(R.id.webView1);
-
 
         //jacascriptを許可する
         WebSettings settings = myWebView.getSettings();
@@ -115,23 +122,14 @@ public class MainActivity extends AppCompatActivity {
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBarBackground = (FrameLayout) findViewById(R.id.progressBarBackground);
 
-        String url;
-        SharedPreferences pref = getSharedPreferences("settings_pref",MODE_WORLD_READABLE|MODE_WORLD_WRITEABLE);
-        url = pref.getString(getString(R.string.view_url_key), URL);
-        Log.d("moritanian2" , url);
-        progressBarBackground.setVisibility(View.VISIBLE);
-        myWebView.loadUrl(url);
-
-
         Log.d("moritanian2" , "connect Arduino " +  connectArduino());
-        Log.d("moritanian2", arduino.getBoardVersion());
-        arduino.digitalWrite(13, true);
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
+        reloadWebView();
        // setupCamera();
     }
 
@@ -169,16 +167,17 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             case R.id.action_reload:
                 reloadWebView();
-                return true;
+                break;
 
             case R.id.action_connect_arduino:
                 connectArduino();
-                return true;
+                break;
 
             case R.id.home:
                 if(myWebView.canGoBack()){
                     myWebView.goBack();
                 }
+                break;
         }
 
         return super.onOptionsItemSelected(item);
@@ -187,7 +186,14 @@ public class MainActivity extends AppCompatActivity {
     private void reloadWebView(){
         progressBarBackground.setVisibility(View.VISIBLE);
         myWebView.clearCache(true);
-        myWebView.reload();
+        String url = SettingsActivity.getViewURL(this, URL);
+
+        if(viewUrl == url){
+            myWebView.reload();
+        } else {
+            viewUrl = url;
+            myWebView.loadUrl(viewUrl);
+        }
     }
 
     private class MyWebView extends WebViewClient {
@@ -218,6 +224,39 @@ public class MainActivity extends AppCompatActivity {
         }
 
         jsInterface.callJsFunction(String.format("log('arduino version: %s')",  arduino.getBoardVersion()));
+        // set firmata error event
+        arduino.setEventHandler(
+                new ArduinoFirmataEventHandler(){
+                    public void onError(String errorMessage){
+                        Log.e("ArduinoFirmata App", errorMessage);
+                    }
+                    public void onClose(){
+                        Log.v("ArduinoFirmata App", "arduino closed");
+                    }
+                }
+        );
+
+        // set
+        arduino.setDataHandler(
+                new ArduinoFirmataDataHandler() {
+                    @Override
+                    public void onSysex(byte b, byte[] bytes) {
+
+                        // byte[] -> jsonString
+                        StringBuilder bytesJson = new StringBuilder();
+                        bytesJson.append("[");
+                        for(byte m : bytes){
+                            bytesJson.append(String.format("%d,", m));
+                        }
+                        int len = bytesJson.length();
+                        bytesJson.replace(len - 1, len ,"]"); // 最後の , を　] に置き換え
+                        String funcString = String.format("getSysex(%d, \"%s\")", b, bytesJson.toString());
+                        //Log.i("sysex funcstring", funcString);
+                        jsInterface.callJsFunction(funcString);
+                    }
+                }
+
+        );
 
         return true;
 

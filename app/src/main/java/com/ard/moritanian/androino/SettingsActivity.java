@@ -1,6 +1,7 @@
 package com.ard.moritanian.androino;
 
 import android.app.ActionBar;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -9,7 +10,9 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MenuItem;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.TextView;
 
 /**
@@ -18,6 +21,7 @@ import android.widget.TextView;
 
 public class SettingsActivity extends AppCompatActivity {
 
+    public static final String SETTINGS_PREF_KEY = "settings_pref";
     private EditText viewUrlEditText;
     private SharedPreferences pref;
     private SharedPreferences.Editor prefEditor;
@@ -27,7 +31,7 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        SharedPreferences pref = getSharedPreferences("settings_pref",MODE_WORLD_READABLE|MODE_WORLD_WRITEABLE);
+        SharedPreferences pref = getSharedPreferences(SETTINGS_PREF_KEY, MODE_WORLD_READABLE|MODE_WORLD_WRITEABLE);
         prefEditor = pref.edit();
 
         // アクションバーに前画面に戻る機能をつける
@@ -58,6 +62,18 @@ public class SettingsActivity extends AppCompatActivity {
 
                 prefEditor.putString(getString(R.string.view_url_key) ,s.toString());
                 prefEditor.commit();
+
+            }
+        });
+
+        Switch fullScreenSwitch = (Switch)findViewById(R.id.full_screen_toggle);
+        fullScreenSwitch.setChecked(getIsFullScreen(this));
+
+        fullScreenSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                prefEditor.putBoolean(getString(R.string.is_full_screen_key), isChecked);
+                prefEditor.commit();
             }
         });
 
@@ -73,5 +89,15 @@ public class SettingsActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    public static String getViewURL(Context con, String defaultURL){
+        SharedPreferences pref = con.getSharedPreferences(SETTINGS_PREF_KEY , MODE_WORLD_READABLE|MODE_WORLD_WRITEABLE);
+        return pref.getString(con.getString(R.string.view_url_key), defaultURL);
+    }
+
+    public static Boolean getIsFullScreen(Context con){
+        SharedPreferences pref = con.getSharedPreferences(SETTINGS_PREF_KEY , MODE_WORLD_READABLE|MODE_WORLD_WRITEABLE);
+        String s = con.getString(R.string.is_full_screen_key );
+        return pref.getBoolean(s, false);
+    }
 
 }

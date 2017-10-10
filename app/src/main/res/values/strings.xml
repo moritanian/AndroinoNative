@@ -5,6 +5,7 @@
     <string name="action_connect_arduino">Connect Arduino</string>
 
     <string name="view_url_key">viewURL</string>
+    <string name="is_full_screen_key">isFullScreen</string>
 
 
 </resources>
