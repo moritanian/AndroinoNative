@@ -296,7 +296,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
                         }
                         int len = bytesJson.length();
                         bytesJson.replace(len - 1, len ,"]"); // 最後の , を　] に置き換え
-                        String funcString = String.format("getSysex(%d, \"%s\")", b, bytesJson.toString());
+                        String funcString = String.format("Arduino.getSysex(%d, \"%s\")", b, bytesJson.toString());
                         //Log.i("sysex funcstring", funcString);
                         jsInterface.callJsFunction(funcString);
                     }
