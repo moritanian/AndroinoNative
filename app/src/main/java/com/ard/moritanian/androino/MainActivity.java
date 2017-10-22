@@ -12,6 +12,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.http.SslError;
 import android.os.Build;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
@@ -21,6 +22,7 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceHolder;
@@ -29,6 +31,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.PermissionRequest;
+import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -37,6 +40,7 @@ import android.webkit.WebViewClient;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.URL;
 import java.util.List;
 
 import android.content.Context;
@@ -47,9 +51,7 @@ import android.widget.Toast;
 
 import org.shokai.firmata.ArduinoFirmataDataHandler;
 import org.shokai.firmata.ArduinoFirmataEventHandler;
-import java.io.*;
 import java.lang.*;
-import android.hardware.usb.*;
 
 public class MainActivity extends AppCompatActivity  implements SensorEventListener {
 
@@ -67,7 +69,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 
     private static final int PORT = 4680;
     private static final String IP_ADDR = "localhost:8080/Androino/server/"; //"192.168.179.7"; // IPアドレス
-    public static final String URL = "https://moritanian.github.io//Androino/server/"; //"http://localhost:8080/Androino/server/";
+    public static final String defaultURL = "https://moritanian.github.io//Androino/server/"; //"http://localhost:8080/Androino/server/";
 
     ArduinoFirmata arduino;
     String viewUrl;
@@ -201,16 +203,32 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyCode != KeyEvent.KEYCODE_BACK){
+            return super.onKeyDown(keyCode, event);
+        }else{
+            if(myWebView.canGoBack()){
+                myWebView.goBack();
+            } else {
+                return super.onKeyDown(keyCode, event);
+            }
+            return true;
+        }
+    }
+
+
     private void reloadWebView(){
         progressBarBackground.setVisibility(View.VISIBLE);
         myWebView.clearCache(true);
-        String url = SettingsActivity.getViewURL(this, URL);
+        String url = SettingsActivity.getViewURL(this, defaultURL);
 
         if(viewUrl == url){
             myWebView.reload();
         } else {
             viewUrl = url;
             myWebView.loadUrl(viewUrl);
+
         }
     }
 
@@ -222,6 +240,16 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
             progressBarBackground.setVisibility(View.INVISIBLE);
             // HTML内に埋め込まれている「callJavaScript()」関数を呼び出す
             myWebView.loadUrl("javascript:Arduino.log('called from native androino')");
+        }
+
+        @Override
+        public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+            // local server のみssl証明書のないhttps接続許可
+            if(viewUrl.startsWith("https://192")){
+                handler.proceed();
+            } else {
+                super.onReceivedSslError(view, handler, error);
+            }
         }
     }
 
