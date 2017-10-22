@@ -10,6 +10,7 @@ import android.widget.Toast;
 
 /**
  * Created by Moritanian on 2017/06/05.
+ * Communicate width JS (not JK)
  */
 
 public class JavaScriptInterface {
@@ -63,7 +64,7 @@ public class JavaScriptInterface {
 
     @JavascriptInterface
     public void pinMode(int pin, String mode) {
-        callJsFunction(String.format("log('pinmode %d %s')", pin, mode));
+        callJsLog(String.format("pinmode %d %s", pin, mode));
         switch (mode){
             case OUTPUT:
                 ((MainActivity)con).arduino.pinMode(pin, ArduinoFirmata.OUTPUT);
@@ -89,7 +90,7 @@ public class JavaScriptInterface {
 
     @JavascriptInterface
     public void digitalWrite(int pin, String value) {
-        callJsFunction(String.format("log('digitalWrite %d %s')", pin, value));
+        callJsLog(String.format("digitalWrite %d %s", pin, value));
         ((MainActivity)con).arduino.digitalWrite(pin, value.equals(HIGH));
     }
 
@@ -124,7 +125,7 @@ public class JavaScriptInterface {
 
     @JavascriptInterface
     public void sendSysex(byte command, byte[] data) {
-        Log.i("sendSysex", String.format("%d %d", data.length, data[0]));
+        Log.i("sendSysex", String.format("%d %d", data.length, data[0] & 0xff));
         ((MainActivity)con).arduino.sysex(command, data);
     }
 
@@ -133,11 +134,22 @@ public class JavaScriptInterface {
         ((MainActivity)con).arduino.digitalWrite(13, false);
     }
 
+    public void callJsLog(final String log){
+        callJsFunction(String.format("Arduino.log('%s')", log));
+    }
+
+    public void dispatchJsEvent(final String eventName, String value){
+        String funcStr = "var event = new Event(\"%s\");" +
+                "event.value = %s;" +
+                "window.dispatchEvent(event);";
+        callJsFunction(String.format(funcStr, eventName, value));
+    }
+
     public void callJsFunction(final String func) {
         ((Activity)con).runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                webView.loadUrl("javascript:Arduino." + func);
+                webView.loadUrl("javascript:" + func);
             }
         });
     }

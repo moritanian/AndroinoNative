@@ -8,6 +8,10 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 
 import android.hardware.Camera;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Build;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
@@ -47,7 +51,7 @@ import java.io.*;
 import java.lang.*;
 import android.hardware.usb.*;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity  implements SensorEventListener {
 
     private WebView myWebView;
     private JavaScriptInterface jsInterface;
@@ -68,12 +72,15 @@ public class MainActivity extends AppCompatActivity {
     ArduinoFirmata arduino;
     String viewUrl;
 
+    private SensorManager mSensorManager;
+    private Sensor mProximity;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // fullscreen
         if(SettingsActivity.getIsFullScreen(this)){
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
             requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -124,6 +131,12 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d("moritanian2" , "connect Arduino " +  connectArduino());
 
+        // センサーオブジェクトを取得
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
+        // 近接センサーのオブジェクトを取得
+        mProximity = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+
     }
 
     @Override
@@ -131,6 +144,8 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         reloadWebView();
        // setupCamera();
+        // 近接センサ
+        mSensorManager.registerListener(this, mProximity, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     @Override
@@ -143,6 +158,9 @@ public class MainActivity extends AppCompatActivity {
             cam.release();
             cam = null;
         }
+
+        // 近接センサーを無効
+        mSensorManager.unregisterListener(this);
     }
 
     @Override
@@ -223,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
 
-        jsInterface.callJsFunction(String.format("log('arduino version: %s')",  arduino.getBoardVersion()));
+        jsInterface.callJsLog(String.format("arduino version: %s",  arduino.getBoardVersion()));
         // set firmata error event
         arduino.setEventHandler(
                 new ArduinoFirmataEventHandler(){
@@ -448,5 +466,17 @@ public class MainActivity extends AppCompatActivity {
             }
             return cameraId;
         }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_PROXIMITY) {
+            jsInterface.dispatchJsEvent("deviceproximity", String.valueOf(event.values[0]));
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 }

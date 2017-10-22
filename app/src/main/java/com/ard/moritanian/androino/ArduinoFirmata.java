@@ -254,7 +254,7 @@ public class ArduinoFirmata{
     }
 
     private void processInput(byte inputData){
-        //Log.i("processinput", String.format("%d", inputData));
+        Log.i("processinput", String.format("%d", inputData & 0xff));
         byte command;
         if(parsingSysex){
             if(inputData == END_SYSEX){
