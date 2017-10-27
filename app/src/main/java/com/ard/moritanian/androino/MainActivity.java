@@ -55,6 +55,7 @@ import java.lang.*;
 
 public class MainActivity extends AppCompatActivity  implements SensorEventListener {
 
+    public static final int REQUEST_RELOAD = 1;
     private WebView myWebView;
     private JavaScriptInterface jsInterface;
     final String NATIVE_INTERFACE_NAME = "nativeInterface";
@@ -138,13 +139,12 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 
         // 近接センサーのオブジェクトを取得
         mProximity = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
-
+        reloadWebView();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        reloadWebView();
        // setupCamera();
         // 近接センサ
         mSensorManager.registerListener(this, mProximity, SensorManager.SENSOR_DELAY_NORMAL);
@@ -183,7 +183,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         switch (id){
             case R.id.action_settings:
                 Intent intent = new Intent(this, SettingsActivity.class);
-                startActivity(intent);
+                startActivityForResult(intent, 0);
                 return true;
             case R.id.action_reload:
                 reloadWebView();
@@ -214,6 +214,13 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
                 return super.onKeyDown(keyCode, event);
             }
             return true;
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data){
+        if(resultCode == REQUEST_RELOAD) {
+            reloadWebView();
         }
     }
 

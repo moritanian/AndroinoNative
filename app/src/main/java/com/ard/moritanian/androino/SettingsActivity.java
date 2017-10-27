@@ -2,6 +2,7 @@ package com.ard.moritanian.androino;
 
 import android.app.ActionBar;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -83,6 +84,9 @@ public class SettingsActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case android.R.id.home:
+                Intent intent = new Intent();
+                setResult(MainActivity.REQUEST_RELOAD , this.getIntent());
+                Log.i("onOptionSelected", String.valueOf(item.getItemId()));
                 finish();
                 return true;
         }

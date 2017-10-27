@@ -38,7 +38,6 @@ public class JavaScriptInterface {
 
     @JavascriptInterface
     public void showToast(String messege) {
-        messege += "[ここからはJavaで付加されたテキストです]";
         Toast.makeText(this.con, messege, Toast.LENGTH_SHORT).show();
     }
 
@@ -127,6 +126,11 @@ public class JavaScriptInterface {
     public void sendSysex(byte command, byte[] data) {
         Log.i("sendSysex", String.format("%d %d", data.length, data[0] & 0xff));
         ((MainActivity)con).arduino.sysex(command, data);
+    }
+
+    @JavascriptInterface
+    public String getIpAdress(){
+        return Util.getIpAdress(con);
     }
 
     @JavascriptInterface
